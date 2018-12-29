@@ -22,6 +22,10 @@
     <string name="ntext">Hi, how are you?</string>
     <string name="title_activity_stats_view">StatsView</string>
 
+    <!-- Notification Channel -->
+    <string name="channel_name">mood_notification</string>
+    <string name="channel_description">It allows to send the mood notifications from KIBUN</string>
+
     <!-- Moods -->
     <string name="vsad">muy triste</string>
     <string name="sad">triste</string>

@@ -1,10 +1,12 @@
 package com.google.firebase.jfpinedap.kibun;
 
+import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
+import android.os.Build;
 import android.support.v4.app.NotificationCompat;
 import android.text.format.DateUtils;
 import android.widget.RemoteViews;
@@ -19,6 +21,7 @@ public class JobNotifications extends JobService {
 
     private String NOTIFICATION_TITLE = "KIBUN";
     private String CONTENT_TEXT = "¿Cómo estás?";
+    public static final String CHANNEL_ID = "com.kibun.moodnotifications.ANDROID";
 
     @Override
     public boolean onStartJob(JobParameters params) {
@@ -67,18 +70,36 @@ public class JobNotifications extends JobService {
         RemoteViews collapsedView = new RemoteViews(getPackageName(), R.layout.view_collapsed_notification);
         collapsedView.setTextViewText(R.id.timestamp, DateUtils.formatDateTime(this, System.currentTimeMillis(), DateUtils.FORMAT_SHOW_TIME));
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
         // these are the three things a NotificationCompat.Builder object requires at a minimum
-        builder.setSmallIcon(R.drawable.ic_cyber)
+                .setSmallIcon(R.drawable.ic_cyber)
                 .setContentTitle(NOTIFICATION_TITLE)
                 .setContentText(CONTENT_TEXT)
                 // setting the custom collapsed and expanded views
                 //.setCustomContentView(collapsedView)
                 .setCustomBigContentView(expandedView)
                 // setting style to DecoratedCustomViewStyle() is necessary for custom views to display
-                .setStyle(new android.support.v4.app.NotificationCompat.DecoratedCustomViewStyle());
+                .setStyle(new android.support.v4.app.NotificationCompat.DecoratedCustomViewStyle()) //This could be replaced https://developer.android.com/training/notify-user/build-notification#java
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         // retrieves android.app.NotificationManager
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Objects.requireNonNull(notificationManager).notify(234, builder.build());
     }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
+    }
 }
+
