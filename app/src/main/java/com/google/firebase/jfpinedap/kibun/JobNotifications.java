@@ -28,6 +28,7 @@ public class JobNotifications extends JobService {
 
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null){
+            createNotificationChannel();
             sendNotification();
             jobFinished(params, false);
             return true;

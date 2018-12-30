@@ -2,6 +2,7 @@ package com.google.firebase.jfpinedap.kibun;
 
 import android.Manifest;
 import android.app.AlertDialog;
+import android.app.NotificationChannel;
 import android.app.job.JobInfo;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
@@ -14,6 +15,7 @@ import android.graphics.Color;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -80,6 +82,8 @@ public class BaseStatsView extends AppCompatActivity {
 
     private String NOTIFICATION_TITLE = "KIBUN";
     private String CONTENT_TEXT = "¿Cómo estás?";
+    public static final String CHANNEL_ID = "com.kibun.moodnotifications.ANDROID";
+
 
     // Firebase instance variables
     private FirebaseDatabase mFirebaseDatabase;
@@ -126,6 +130,7 @@ public class BaseStatsView extends AppCompatActivity {
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         // Iniciar job para mostrar notificaciones
+        createNotificationChannel();
         iniciarJob();
 
         // Servicios de ubicación
@@ -300,6 +305,7 @@ public class BaseStatsView extends AppCompatActivity {
                 startActivity(new Intent(this, ActivitySettings.class));
                 return true;
             case R.id.notification:
+                createNotificationChannel();
                 sendNotification();
                 return true;
             /*case R.id.location:
@@ -535,19 +541,36 @@ public class BaseStatsView extends AppCompatActivity {
         RemoteViews collapsedView = new RemoteViews(getPackageName(), R.layout.view_collapsed_notification);
         collapsedView.setTextViewText(R.id.timestamp, DateUtils.formatDateTime(this, System.currentTimeMillis(), DateUtils.FORMAT_SHOW_TIME));
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this);
-        // these are the three things a NotificationCompat.Builder object requires at a minimum
-        builder.setSmallIcon(R.drawable.ic_cyber)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
+                // these are the three things a NotificationCompat.Builder object requires at a minimum
+                .setSmallIcon(R.drawable.ic_cyber)
                 .setContentTitle(NOTIFICATION_TITLE)
                 .setContentText(CONTENT_TEXT)
                 // setting the custom collapsed and expanded views
                 //.setCustomContentView(collapsedView)
                 .setCustomBigContentView(expandedView)
                 // setting style to DecoratedCustomViewStyle() is necessary for custom views to display
-                .setStyle(new android.support.v4.app.NotificationCompat.DecoratedCustomViewStyle());
+                .setStyle(new android.support.v4.app.NotificationCompat.DecoratedCustomViewStyle()) //This could be replaced https://developer.android.com/training/notify-user/build-notification#java
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT);
         // retrieves android.app.NotificationManager
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Objects.requireNonNull(notificationManager).notify(234, builder.build());
+    }
+
+    private void createNotificationChannel() {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            CharSequence name = getString(R.string.channel_name);
+            String description = getString(R.string.channel_description);
+            int importance = NotificationManager.IMPORTANCE_DEFAULT;
+            NotificationChannel channel = new NotificationChannel(CHANNEL_ID, name, importance);
+            channel.setDescription(description);
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            NotificationManager notificationManager = getSystemService(NotificationManager.class);
+            notificationManager.createNotificationChannel(channel);
+        }
     }
 
     public void setLocation(Location location){
